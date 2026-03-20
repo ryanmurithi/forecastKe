@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const predictions_controller_1 = require("../controllers/predictions.controller");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.post('/', auth_1.authenticateToken, predictions_controller_1.placePrediction);
+router.get('/me', auth_1.authenticateToken, predictions_controller_1.getMyPredictions);
+router.get('/:marketId', predictions_controller_1.getMarketPredictions);
+exports.default = router;

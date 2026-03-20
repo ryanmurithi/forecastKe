@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  email        String       @unique
+  passwordHash String
+  points       Int          @default(1000)
+  accuracy     Float        @default(0)
+  streak       Int          @default(0)
+  role         Role         @default(USER)
+  createdAt    DateTime     @default(now())
+  predictions  Prediction[]
+  comments     Comment[]
+  reactions    Reaction[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Market {
+  id               String       @id @default(cuid())
+  title            String
+  description      String
+  category         String
+  closeDate        DateTime
+  status           MarketStatus @default(OPEN)
+  resolutionSource String
+  yesPoints        Int          @default(0)
+  noPoints         Int          @default(0)
+  result           Result?
+  createdAt        DateTime     @default(now())
+  predictions      Prediction[]
+  comments         Comment[]
+}
+
+enum MarketStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+}
+
+enum Result {
+  YES
+  NO
+}
+
+model Prediction {
+  id           String   @id @default(cuid())
+  userId       String
+  marketId     String
+  prediction   String   // "YES" or "NO"
+  pointsStaked Int
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  market       Market   @relation(fields: [marketId], references: [id])
+}
+
+model Comment {
+  id        String     @id @default(cuid())
+  marketId  String
+  userId    String
+  content   String
+  imageUrl  String?
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  market    Market     @relation(fields: [marketId], references: [id])
+  reactions Reaction[]
+  parentId  String?
+  replies   Comment[]  @relation("CommentReplies")
+  parent    Comment?   @relation("CommentReplies", fields: [parentId], references: [id])
+}
+
+model Reaction {
+  id           String  @id @default(cuid())
+  commentId    String
+  userId       String
+  reactionType String  // "🔥" | "😂" | "🎯" | "💀" | "👀"
+  comment      Comment @relation(fields: [commentId], references: [id])
+  user         User    @relation(fields: [userId], references: [id])
+}

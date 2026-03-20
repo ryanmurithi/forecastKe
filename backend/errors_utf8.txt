@@ -1,0 +1,8 @@
+﻿src/controllers/comments.controller.ts(35,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Comment"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Comment"> | undefined'.
+src/controllers/comments.controller.ts(60,68): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/comments.controller.ts(67,48): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/predictions.controller.ts(96,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Prediction"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Prediction"> | undefined'.
