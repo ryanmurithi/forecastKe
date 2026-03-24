@@ -7,12 +7,15 @@ import { z } from 'zod';
 const registerSchema = z.object({
     username: z.string().min(3).max(20),
     email: z.string().email(),
-    password: z.string().min(6)
+    password: z.string().min(6),
+    termsAccepted: z.boolean().refine(val => val === true, {
+        message: "You must accept the terms and conditions"
+    })
 });
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { username, email, password } = registerSchema.parse(req.body);
+        const { username, email, password, termsAccepted } = registerSchema.parse(req.body);
 
         const existingUser = await prisma.user.findFirst({
             where: {
@@ -30,7 +33,8 @@ export const register = async (req: Request, res: Response) => {
             data: {
                 username,
                 email,
-                passwordHash
+                passwordHash,
+                termsAccepted
             }
         });
 

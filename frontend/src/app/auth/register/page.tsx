@@ -6,18 +6,26 @@ import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [acceptTerms, setAcceptTerms] = useState(false);
     const [error, setError] = useState("");
     const { login } = useAuth();
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
+        if (!acceptTerms) {
+            setError("You must accept the Terms and Conditions and Privacy Policy.");
+            return;
+        }
         try {
-            const res = await api.post("/auth/register", { username, email, password });
+            const res = await api.post("/auth/register", { username, email, password, termsAccepted: acceptTerms });
             login(res.data.token, res.data.user);
         } catch (err: any) {
             setError(err.response?.data?.error || "Registration failed");
@@ -42,7 +50,43 @@ export default function Register() {
                 </div>
                 <div>
                     <label className="text-sm font-medium">Password</label>
-                    <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+                    <div className="relative">
+                        <Input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-start space-x-2 pt-2">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+                        required
+                    />
+                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-tight">
+                        I agree to the{" "}
+                        <Link href="/terms" className="text-primary hover:underline" target="_blank">
+                            Terms & Conditions
+                        </Link>{" "}
+                        and{" "}
+                        <Link href="/privacy" className="text-primary hover:underline" target="_blank">
+                            Privacy Policy
+                        </Link>
+                    </label>
                 </div>
 
                 {error && <p className="text-sm text-destructive">{error}</p>}

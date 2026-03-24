@@ -16,6 +16,7 @@ model User {
   accuracy     Float        @default(0)
   streak       Int          @default(0)
   role         Role         @default(USER)
+  termsAccepted Boolean     @default(false)
   createdAt    DateTime     @default(now())
   predictions  Prediction[]
   comments     Comment[]

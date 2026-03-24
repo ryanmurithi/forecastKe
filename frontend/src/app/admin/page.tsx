@@ -1,64 +1,128 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
-import api from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, LayoutDashboard, Store, Users as UsersIcon } from "lucide-react";
+import { OverviewTab } from "./components/OverviewTab";
+import { MarketsTab } from "./components/MarketsTab";
+import { UsersTab } from "./components/UsersTab";
+
+// Types
+type Role = "ADMIN" | "USER";
+interface User {
+    id: string;
+    username: string;
+    role: Role;
+    points: number;
+}
 
 export default function AdminDashboard() {
-    const { user } = useAuth();
+    const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+    const [activeTab, setActiveTab] = useState("overview");
+    const router = useRouter();
 
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [category, setCategory] = useState("Politics");
-    const [closeDate, setCloseDate] = useState("");
-    const [resolutionSource, setResolutionSource] = useState("");
-    const [msg, setMsg] = useState("");
+    useEffect(() => {
+        const checkAuth = () => {
+            try {
+                const token = localStorage.getItem("forecastke_token");
+                const userStr = localStorage.getItem("forecastke_user");
+                if (!token || !userStr) {
+                    router.push("/auth/login");
+                    return;
+                }
 
-    if (!user || user.role !== "ADMIN") {
-        return <div className="text-center py-20 text-destructive font-bold h-screen">Access Denied</div>;
+                const user = JSON.parse(userStr) as User;
+                if (user.role !== "ADMIN") {
+                    router.push("/auth/login");
+                } else {
+                    setIsAdmin(true);
+                }
+            } catch (err) {
+                router.push("/auth/login");
+            }
+        };
+        checkAuth();
+    }, [router]);
+
+    if (isAdmin === null) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
-    const handleCreateMarket = async () => {
-        try {
-            await api.post("/markets", {
-                title, description, category, closeDate: new Date(closeDate).toISOString(), resolutionSource
-            });
-            setMsg("Market created!");
-            setTitle(""); setDescription(""); setCloseDate(""); setResolutionSource("");
-        } catch (e: any) {
-            setMsg("Error: " + e.response?.data?.error);
-        }
-    };
+    if (!isAdmin) {
+        return (
+            <div className="p-8 text-center text-red-500 font-semibold bg-red-50/50 rounded-lg border border-red-100">
+                Unauthorized Access
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-2xl mx-auto py-10 space-y-8">
-            <h1 className="text-3xl font-bold border-b pb-4">Admin Dashboard</h1>
+        <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-8rem)]">
+            {/* Sidebar for Desktop, hidden on mobile */}
+            <aside className="hidden md:flex flex-col w-64 bg-card rounded-xl border p-4 shadow-sm h-fit">
+                <h2 className="text-xl font-bold mb-6 px-2 text-primary">Admin Panel</h2>
+                <nav className="flex flex-col gap-2">
+                    <Button
+                        variant={activeTab === "overview" ? "default" : "ghost"}
+                        className="justify-start gap-3"
+                        onClick={() => setActiveTab("overview")}
+                    >
+                        <LayoutDashboard className="h-5 w-5" /> Overview
+                    </Button>
+                    <Button
+                        variant={activeTab === "markets" ? "default" : "ghost"}
+                        className="justify-start gap-3"
+                        onClick={() => setActiveTab("markets")}
+                    >
+                        <Store className="h-5 w-5" /> Markets
+                    </Button>
+                    <Button
+                        variant={activeTab === "users" ? "default" : "ghost"}
+                        className="justify-start gap-3"
+                        onClick={() => setActiveTab("users")}
+                    >
+                        <UsersIcon className="h-5 w-5" /> Users
+                    </Button>
+                </nav>
+            </aside>
 
-            <div className="space-y-4 bg-card p-6 rounded-xl border shadow-sm">
-                <h2 className="text-xl font-semibold">Create New Market</h2>
-                <Input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-                <Textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
-                <select
-                    className="w-full h-10 px-3 py-2 rounded-md border bg-background"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                >
-                    <option>Politics</option>
-                    <option>Sports</option>
-                    <option>Entertainment</option>
-                    <option>Economy</option>
-                    <option>Tech</option>
-                    <option>Other</option>
-                </select>
-                <Input type="datetime-local" value={closeDate} onChange={e => setCloseDate(e.target.value)} />
-                <Input placeholder="Resolution Source (e.g. Official Results)" value={resolutionSource} onChange={e => setResolutionSource(e.target.value)} />
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-auto">
+                {/* Mobile Tabs (only visible on small screens) */}
+                <div className="md:hidden mb-6 block">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="overview">Overview</TabsTrigger>
+                            <TabsTrigger value="markets">Markets</TabsTrigger>
+                            <TabsTrigger value="users">Users</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
 
-                <Button onClick={handleCreateMarket} className="w-full">Create Market</Button>
-                {msg && <p className="text-sm font-medium text-center">{msg}</p>}
-            </div>
+                {/* Content Views */}
+                <div className="bg-card border shadow-sm rounded-xl p-6 min-h-[600px]">
+                    {activeTab === "overview" && (
+                        <div>
+                            <h1 className="text-2xl font-bold mb-6">Platform Overview</h1>
+                            <p className="text-muted-foreground">Stats will load here...</p>
+                        </div>
+                    )}
+                    {activeTab === "markets" && (
+                        <MarketsTab />
+                    )}
+                    {activeTab === "users" && (
+                        <UsersTab />
+                    )}
+                </div>
+            </main>
         </div>
     );
 }

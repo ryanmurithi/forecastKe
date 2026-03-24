@@ -34,11 +34,11 @@ export default function Navbar() {
                         </>
                     ) : (
                         <div className="space-x-2">
-                            <Button variant="outline" asChild>
-                                <Link href="/auth/login">Login</Link>
+                            <Button variant="outline" render={<Link href="/auth/login" />}>
+                                Login
                             </Button>
-                            <Button asChild>
-                                <Link href="/auth/register">Sign Up</Link>
+                            <Button render={<Link href="/auth/register" />}>
+                                Sign Up
                             </Button>
                         </div>
                     )}
